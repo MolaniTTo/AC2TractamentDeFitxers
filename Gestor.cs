@@ -1,4 +1,5 @@
-﻿using System;
+﻿using CsvHelper.Configuration.Attributes;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -9,40 +10,37 @@ namespace AC2TractamentDeFitxers
     public class Gestor
     {
         public int Any {  get; set; }
+
+        [Name("Codi comarca")]
         public int CodiComarca { get; set; }
         public string Comarca { get; set; }
+
+        [Name("Població")]
         public int Poblacio { get; set; }
+
+        [Name("Domèstic xarxa")]
         public  int DomesticXarxa { get; set; }
+
+        [Name("Activitats econòmiques i fonts pròpies")]
         public int ActiEconom { get; set; }
         public int Total {  get; set; }
+
+        [Name("Consum domèstic per càpita")]
         public double ConsDomCap {  get; set; }
 
-    }
-
-    public static List<Gestor> CargarDatos(string filePath)
-    {
-        var datos = new List<Gestor>();
-
-        using (var reader = new StreamReader(filePath))
+        public Gestor(int any, int codiComarca, string comarca, int poblacio, int domesticXarxa, int actiEconom, int total, double consDomCap)
         {
-            reader.ReadLine();
-
-            while (!reader.EndOfStream)
-            {
-                var line = reader.ReadLine();
-                var values = line.Split(',');
-
-                datos.Add(new Gestor
-                {
-                    Any = int.Parse(values[0]),
-                    CodiComarca = int.Parse(values[1]),
-                    Comarca = values[2]
-
-                });
-
-
-            }
+            Any = any;
+            CodiComarca = codiComarca;
+            Comarca = comarca;
+            Poblacio = poblacio;
+            DomesticXarxa = domesticXarxa;
+            ActiEconom = actiEconom;
+            Total = total;
+            ConsDomCap = consDomCap;
         }
+
+        public Gestor() { }
 
     }
 }
