@@ -1,9 +1,5 @@
 ﻿using CsvHelper;
-using System;
-using System.Collections.Generic;
-using System.IO;
 using System.Xml.Serialization;
-using System.Collections.Generic;
 using System.Globalization;
 
 namespace AC2TractamentDeFitxers
@@ -15,12 +11,47 @@ namespace AC2TractamentDeFitxers
             string filePath = @"../../../ConsAigua.csv";
             string xmlFilePath = @"../../../ConsAigua.xml";
 
-            //convertToXML(filePath, xmlFilePath);
-            var records = ReadXML(xmlFilePath);
-            //ComarquesPoblacio(records);
-            CalcularMitjanaConsumDomesticPerComarca(records);
-            //ComarquesConsumDomesticMesAlt(records);
+            //Crear menu para ejecutar los ejercicios
+            Console.WriteLine("Selecciona una opció:");
+            Console.WriteLine("1. Convertir a XML");
+            Console.WriteLine("2. Comarques amb població superior a 200.000 habitants");
+            Console.WriteLine("3. Mitjana de consum domèstic per comarca");
+            Console.WriteLine("4. Comarques amb el consum domèstic per càpita més alt");
+            Console.WriteLine("5. Comarques amb el consum domèstic per càpita més baix");
+            Console.WriteLine("6. Filtrar i mostrar comarques");
+            int opcion = Convert.ToInt32(Console.ReadLine());
 
+            switch(opcion)
+            {
+                case 1:
+                    convertToXML(filePath, xmlFilePath);
+                    break;
+                case 2:
+                    var records = ReadXML(xmlFilePath);
+                    ComarquesPoblacio(records);
+                    break;
+                case 3:
+                     records = ReadXML(xmlFilePath);
+                    CalcularMitjanaConsumDomesticPerComarca(records);
+                    break;
+                case 4:
+                    records = ReadXML(xmlFilePath);
+                    ComarquesConsumDomesticMesAlt(records);
+                    break;
+                case 5:
+                    records = ReadXML(xmlFilePath);
+                    ComarquesConsumDomesticMesBaix(records);
+                    break;
+                case 6:
+                    records = ReadXML(xmlFilePath);
+                    Console.WriteLine("Introdueix el nom de comarca o el codi:");
+                    string filtro = Console.ReadLine();
+                    FiltrarYMostrarComarcas(records, filtro);
+                    break;
+                default:
+                    Console.WriteLine("Opción no válida");
+                    break;
+            }
         }
 
         public static void convertToXML(string filePath, string xmlFilePath) // Convertir a XML
@@ -36,7 +67,8 @@ namespace AC2TractamentDeFitxers
                 writer.Close();
                 Console.WriteLine("Fitxer XML creat correctament");
 
-            }catch (Exception e)
+            }
+            catch (Exception e)
             {
                 Console.WriteLine("Error al convertir a XML: " + e.Message);
             }
@@ -79,43 +111,6 @@ namespace AC2TractamentDeFitxers
         }
 
 
-        /*public static void CalcularMitjanaConsumDomesticPerComarca(List<Gestor> records)
-        {
-            var comarques = new List<Gestor>(); //Llista de comarques
-            var comarquesMitjana = new List<Gestor>(); //Llista de comarques amb la mitjana de consum domèstic
-
-            foreach (var gestor in records) //Afegir les comarques a la llista
-            {
-                if (!comarques.Contains(gestor)) //Si la comarca no està a la llista, l'afegim
-                {
-                    comarques.Add(gestor);
-                }
-            }
-
-            foreach (var comarca in comarques) //Per cada comarca, calculem la mitjana de consum domèstic
-            {
-                double consumTotal = 0; //Consum total de la comarca
-                var numRegistres = 0; //Número de registres de la comarca
-                foreach (var gestor in records) //Per cada registre, sumem el consum domèstic si la comarca és la mateixa
-                {
-                    if (gestor.Comarca == comarca.Comarca)
-                    {
-                        consumTotal += gestor.ConsDomCap;
-                        numRegistres++;
-                    }
-                }
-                var mitjana = consumTotal / numRegistres; //Calculem la mitjana
-                comarquesMitjana.Add(new Gestor(0, 0, comarca.Comarca, 0, 0, 0, 0, mitjana)); //Afegim la comarca amb la mitjana de consum domèstic a la llista
-            }
-
-            Console.WriteLine("Mitjana de consum domèstic per comarca:");
-            foreach (var gestor in comarquesMitjana)
-            {
-                Console.WriteLine($"Comarca: {gestor.Comarca}, Mitjana: {gestor.ConsDomCap}");
-            }
-        }*/
-        
-
         public static void CalcularMitjanaConsumDomesticPerComarca(List<Gestor> records)
         {
             var comarquesMitjana = records
@@ -138,36 +133,54 @@ namespace AC2TractamentDeFitxers
 
         public static void ComarquesConsumDomesticMesAlt(List<Gestor> records)
         {
-            var comarques = new List<Gestor>(); //Llista de comarques
-            var comarquesConsumMesAlt = new List<Gestor>(); //Llista de comarques amb el consum domèstic més alt
+            var comarquesConsumMesAlt = records
+             .GroupBy(g => g.Comarca) // Agrupar por comarca
+             .Select(g => new { Comarca = g.Key, MaxConsum = g.Max(x => x.ConsDomCap) }) // Seleccionar la comarca amb el máxim consum doméstic
+             .OrderByDescending(x => x.MaxConsum); // Ordenar pel máxim consum doméstic de manera descendent
 
-            foreach (var gestor in records) //Afegir les comarques a la llista
+            Console.WriteLine("Comarques amb el consum domèstic per càpita més alt:");
+            foreach (var item in comarquesConsumMesAlt)
             {
-                if (!comarques.Contains(gestor)) //Si la comarca no està a la llista, l'afegim
-                {
-                    comarques.Add(gestor);
-                }
+                Console.WriteLine($"Comarca: {item.Comarca}, Consum domèstic més alt: {item.MaxConsum}");
             }
 
-            foreach (var comarca in comarques) //Per cada comarca, calculem el consum domèstic més alt
-            {
-                double consumMesAlt = 0; //Consum domèstic més alt de la comarca
-                foreach (var gestor in records) //Per cada registre, comprovem si el consum domèstic és més alt
-                {
-                    if (gestor.Comarca == comarca.Comarca && gestor.ConsDomCap > consumMesAlt)
-                    {
-                        consumMesAlt = gestor.ConsDomCap;
-                    }
-                }
-                comarquesConsumMesAlt.Add(new Gestor(0, 0, comarca.Comarca, 0, 0, 0, 0, consumMesAlt)); //Afegim la comarca amb el consum domèstic més alt a la llista
-            }
+        }
 
-            Console.WriteLine("Comarques amb el consum domèstic per càpital més alt:");
-            foreach (var gestor in comarquesConsumMesAlt)
+        public static void ComarquesConsumDomesticMesBaix(List<Gestor> records)
+        {
+            var comarquesConsumMesBaix = records
+                .GroupBy(g => g.Comarca) // Agrupar por comarca
+                .Select(g => new { Comarca = g.Key, MinConsum = g.Min(x => x.ConsDomCap) }) // Seleccionar la comarca con el minim consum doméstic
+                .OrderBy(x => x.MinConsum); // Ordenar por el mínimo consumo doméstico de forma ascendent
+
+            Console.WriteLine("Comarques amb el consum domèstic per càpita més baix:");
+            foreach (var item in comarquesConsumMesBaix)
             {
-                Console.WriteLine($"Comarca: {gestor.Comarca}, Consum domèstic més alt: {gestor.ConsDomCap}");
+                Console.WriteLine($"Comarca: {item.Comarca}, Consum domèstic més baix: {item.MinConsum}");
             }
         }
 
+        public static void FiltrarYMostrarComarcas(List<Gestor> records, string filtro = "")
+        {
+            IEnumerable<Gestor> comarcasFiltradas = records;
+
+            if (!string.IsNullOrWhiteSpace(filtro))
+            {
+                comarcasFiltradas = records.Where(g => g.Comarca.Contains(filtro) || g.CodiComarca.ToString() == filtro);
+            }
+
+            if (comarcasFiltradas.Any())
+            {
+                Console.WriteLine(string.IsNullOrWhiteSpace(filtro) ? "Totes les comarques:" : $"Comarques amb el filtre '{filtro}':");
+                foreach (var comarca in comarcasFiltradas)
+                {
+                    Console.WriteLine($"Comarca: {comarca.Comarca}, Codi comarca: {comarca.CodiComarca}, Consum domèstic per càpita: {comarca.ConsDomCap}");
+                }
+            }
+            else
+            {
+                Console.WriteLine($"No s'han trobat comarques amb el filtre '{filtro}'.");
+            }
+        }
     }
 }
